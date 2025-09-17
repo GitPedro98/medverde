@@ -3,12 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comparador de Taxas</title>
+    <title>Comparador de Taxas: Pagar.me vs. Asaas</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: A comparative dashboard structure is used to directly answer the user's core question: "Which is better?". The top-level navigation consists of buttons for each payment scenario (PIX, Boleto, 1x-6x Credit). Selecting a scenario updates a side-by-side view comparing Pagar.me and Asaas. Each side displays key metrics (Total Cost, Your Net Profit) in prominent cards, with a visual "winner" highlight. A dynamic summary text explicitly states the conclusion for the selected scenario. At the bottom, a comprehensive bar chart provides a holistic overview of costs and profits across all credit card installments for both providers. This structure facilitates direct comparison for specific cases while also offering a strategic, big-picture view. -->
+    <!-- Visualization & Content Choices: Report Info -> A/B comparison of Pagar.me vs. Asaas fees. Goal -> Decide which is more cost-effective. Viz/Presentation -> Side-by-side KPI cards and a grouped bar chart (Chart.js). Interaction -> Buttons to select payment scenario, dynamically updating the side-by-side view and a summary text. Justification -> The side-by-side layout is the most intuitive for A/B comparison. The grouped bar chart is ideal for two entities across multiple categories (installments). The dynamic text provides a direct, synthesized answer. CONFIRMATION: NO SVG/Mermaid used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -203,30 +207,32 @@
     <script>
         const data = {
             pagarme: {
-                pix: { finalValue: 1010.50, totalCost: 10.50, netProfit: 246.33, transferFee: 3.67 },
-                boleto: { finalValue: 1003.49, totalCost: 3.49, netProfit: 246.51, transferFee: 3.67 },
-                '1x': { finalValue: 1048.11, totalCost: 48.11, netProfit: 246.33, transferFee: 3.67 },
-                '2x': { finalValue: 1079.84, totalCost: 79.84, netProfit: 246.33, transferFee: 3.67 },
-                '3x': { finalValue: 1094.09, totalCost: 94.09, netProfit: 246.33, transferFee: 3.67 },
-                '4x': { finalValue: 1111.02, totalCost: 111.02, netProfit: 246.33, transferFee: 3.67 },
-                '5x': { finalValue: 1129.39, totalCost: 129.39, netProfit: 246.33, transferFee: 3.67 },
-                '6x': { finalValue: 1148.35, totalCost: 148.35, netProfit: 246.33, transferFee: 3.67 },
+                pix: { finalValue: 1010.50, totalCost: 10.50, transferFee: 3.67 },
+                boleto: { finalValue: 1003.49, totalCost: 3.49, transferFee: 3.67 },
+                '1x': { finalValue: 1047.95, totalCost: 47.95, transferFee: 3.67, mdrRate: 0.0309, cetRate: 0.0449 },
+                '2x': { finalValue: 1079.84, totalCost: 79.84, transferFee: 3.67, mdrRate: 0.0439, cetRate: 0.0731 },
+                '3x': { finalValue: 1096.15, totalCost: 96.15, transferFee: 3.67, mdrRate: 0.0439, cetRate: 0.0869 },
+                '4x': { finalValue: 1113.00, totalCost: 113.00, transferFee: 3.67, mdrRate: 0.0439, cetRate: 0.1007 },
+                '5x': { finalValue: 1130.34, totalCost: 130.34, transferFee: 3.67, mdrRate: 0.0439, cetRate: 0.1146 },
+                '6x': { finalValue: 1148.44, totalCost: 148.44, transferFee: 3.67, mdrRate: 0.0439, cetRate: 0.1284 },
             },
             asaas: {
-                pix: { finalValue: 1000.99, totalCost: 0.99, netProfit: 245.00, transferFee: 5.00 },
-                boleto: { finalValue: 1000.99, totalCost: 0.99, netProfit: 245.00, transferFee: 5.00 },
-                '1x': { finalValue: 1050.49, totalCost: 50.49, netProfit: 245.00, transferFee: 5.00 },
-                '2x': { finalValue: 1066.31, totalCost: 66.31, netProfit: 245.00, transferFee: 5.00 },
-                '3x': { finalValue: 1082.13, totalCost: 82.13, netProfit: 245.00, transferFee: 5.00 },
-                '4x': { finalValue: 1097.95, totalCost: 97.95, netProfit: 245.00, transferFee: 5.00 },
-                '5x': { finalValue: 1113.77, totalCost: 113.77, netProfit: 245.00, transferFee: 5.00 },
-                '6x': { finalValue: 1129.59, totalCost: 129.59, netProfit: 245.00, transferFee: 5.00 },
+                pix: { finalValue: 1000.99, totalCost: 0.99, transferFee: 5.00, anticipationRate: 0.0579 },
+                boleto: { finalValue: 1000.99, totalCost: 0.99, transferFee: 5.00, anticipationRate: 0.0579 },
+                '1x': { finalValue: 1032.92, totalCost: 32.92, transferFee: 5.00, mdrRate: 0.0199, mdrFixed: 0.49 },
+                '2x': { finalValue: 1051.93, totalCost: 51.93, transferFee: 5.00, mdrRate: 0.0249, mdrFixed: 0.49 },
+                '3x': { finalValue: 1060.85, totalCost: 60.85, transferFee: 5.00, mdrRate: 0.0249, mdrFixed: 0.49 },
+                '4x': { finalValue: 1070.04, totalCost: 70.04, transferFee: 5.00, mdrRate: 0.0249, mdrFixed: 0.49 },
+                '5x': { finalValue: 1079.16, totalCost: 79.16, transferFee: 5.00, mdrRate: 0.0249, mdrFixed: 0.49 },
+                '6x': { finalValue: 1088.55, totalCost: 88.55, transferFee: 5.00, mdrRate: 0.0249, mdrFixed: 0.49 },
             }
         };
 
-        const anticipationRates = {
-            pagarme: { '1x': 0.0140, '2x': 0.0292, '3x': 0.0430, '4x': 0.0568, '5x': 0.0707, '6x': 0.0845 },
-            asaas:   { '1x': 0.0115, '2x': 0.0080, '3x': 0.0160, '4x': 0.0240, '5x': 0.0320, '6x': 0.0400 }
+        const asaasAnticipationRates = {
+            monthly: {
+                '1x': 0.0115,
+                installments: 0.016
+            }
         };
 
         const scenarios = ['PIX', 'Boleto', '1x', '2x', '3x', '4x', '5x', '6x'];
@@ -285,7 +291,7 @@
 
             const pagarmeDataRaw = data.pagarme[scenarioKey.toLowerCase()];
             const asaasDataRaw = data.asaas[scenarioKey.toLowerCase()];
-
+            
             const pagarmeData = {
                 totalCost: pagarmeDataRaw.totalCost * scalingFactor,
                 netProfit: (baseValue * 0.25) - pagarmeDataRaw.transferFee,
@@ -389,40 +395,30 @@
             tableBody.innerHTML = '';
 
             creditScenarios.forEach(scenario => {
-                const pagarmeFinalValue = data.pagarme[scenario.toLowerCase()].finalValue * scalingFactor;
-                const asaasFinalValue = data.asaas[scenario.toLowerCase()].finalValue * scalingFactor;
+                const pagarmeRaw = data.pagarme[scenario.toLowerCase()];
+                const asaasRaw = data.asaas[scenario.toLowerCase()];
 
-                const pagarmeAnticipationPercent = anticipationRates.pagarme[scenario];
-                const asaasAnticipationPercent = anticipationRates.asaas[scenario];
+                const pagarmeFinalValue = pagarmeRaw.finalValue * scalingFactor;
+                const asaasFinalValue = asaasRaw.finalValue * scalingFactor;
                 
-                let pagarmeAnticipationValue = 0;
-                if(scenario !== '1x') {
-                    const mdrRate = 0.0439; 
-                    const cet = data.pagarme[scenario.toLowerCase()].totalCost / data.pagarme[scenario.toLowerCase()].finalValue;
-                    pagarmeAnticipationValue = (cet - mdrRate) * pagarmeFinalValue;
-                } else {
-                     pagarmeAnticipationValue = 0;
-                }
+                const pagarmeTotalCost = pagarmeRaw.totalCost * scalingFactor;
+                const asaasTotalCost = asaasRaw.totalCost * scalingFactor;
 
-                let asaasAnticipationValue = 0;
-                if(scenario !== '1x') {
-                    const mdrRate = 0.0249 + (0.49 / asaasFinalValue);
-                    const cet = data.asaas[scenario.toLowerCase()].totalCost / data.asaas[scenario.toLowerCase()].finalValue;
-                    asaasAnticipationValue = (cet - mdrRate) * asaasFinalValue;
-                } else {
-                    const mdrRate = 0.0199 + (0.49 / asaasFinalValue);
-                    const cet = data.asaas[scenario.toLowerCase()].totalCost / data.asaas[scenario.toLowerCase()].finalValue;
-                    asaasAnticipationValue = (cet - mdrRate) * asaasFinalValue;
-                }
+                const fixedFeePagarme = 0.90;
+                const pagarmeMdrCost = pagarmeFinalValue * pagarmeRaw.mdrRate + fixedFeePagarme;
+                const pagarmeAnticipationValue = pagarmeTotalCost - pagarmeMdrCost;
 
+                const asaasMdrCost = (asaasFinalValue * asaasRaw.mdrRate) + asaasRaw.mdrFixed;
+                let asaasAnticipationValue = asaasTotalCost - asaasMdrCost;
+                if (asaasAnticipationValue < 0) asaasAnticipationValue = 0;
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">${scenario}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${formatCurrency(pagarmeAnticipationValue)}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${formatPercent(pagarmeAnticipationValue/pagarmeFinalValue)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${formatPercent(pagarmeAnticipationValue / pagarmeFinalValue)}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${formatCurrency(asaasAnticipationValue)}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${formatPercent(asaasAnticipationValue/asaasFinalValue)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${formatPercent(asaasAnticipationValue / asaasFinalValue)}</td>
                 `;
                 tableBody.appendChild(row);
             });
