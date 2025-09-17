@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparador de Taxas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 500px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 500px;
+            }
+        }
+        .nav-button, .sim-nav-button {
+            transition: all 0.2s ease-in-out;
+        }
+        .nav-button.active, .provider-btn.active, .sim-nav-button.active {
+            background-color: #4f46e5;
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1);
+        }
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="container mx-auto p-4 sm:p-6 md:p-8">
+
+        <header class="text-center mb-8 md:mb-12">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900">Análise Comparativa com IA: Pagar.me vs. Asaas</h1>
+            <p class="mt-2 text-lg text-slate-600 max-w-3xl mx-auto">Use os controles abaixo para simular diferentes cenários e comparar os custos e lucros entre as plataformas.</p>
+             <div class="mt-6 max-w-xs mx-auto">
+                <label for="base-value-input" class="block text-sm font-medium text-slate-700 mb-1">Valor Líquido Base para Simulação (R$)</label>
+                <input type="number" id="base-value-input" value="1000" class="w-full p-2 border text-center border-slate-300 rounded-lg text-lg font-semibold">
+            </div>
+        </header>
+        
+        <div id="navigation" class="mb-8 flex flex-wrap justify-center gap-2">
+        </div>
+
+        <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-slate-200">
+            <div id="comparison-section" class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                
+                <div id="pagarme-card" class="p-6 rounded-xl border-2 transition-all duration-300">
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">Pagar.me</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="bg-slate-100 p-4 rounded-lg">
+                            <h3 class="text-sm font-semibold text-slate-500 uppercase">Custo Total</h3>
+                            <p id="pagarme-cost" class="text-2xl font-bold text-slate-800 mt-1"></p>
+                        </div>
+                        <div class="bg-slate-100 p-4 rounded-lg">
+                            <h3 class="text-sm font-semibold text-slate-500 uppercase">Seu Lucro Líquido</h3>
+                            <p id="pagarme-profit" class="text-2xl font-bold text-slate-800 mt-1"></p>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-sm bg-slate-50 p-3 rounded-md">
+                        <p><strong>Valor Final (Cliente):</strong> <span id="pagarme-final-value"></span></p>
+                        <p><strong>Taxa de Repasse:</strong> R$ 3,67</p>
+                    </div>
+                </div>
+
+                <div id="asaas-card" class="p-6 rounded-xl border-2 transition-all duration-300">
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">Asaas</h2>
+                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="bg-slate-100 p-4 rounded-lg">
+                            <h3 class="text-sm font-semibold text-slate-500 uppercase">Custo Total</h3>
+                            <p id="asaas-cost" class="text-2xl font-bold text-slate-800 mt-1"></p>
+                        </div>
+                        <div class="bg-slate-100 p-4 rounded-lg">
+                            <h3 class="text-sm font-semibold text-slate-500 uppercase">Seu Lucro Líquido</h3>
+                            <p id="asaas-profit" class="text-2xl font-bold text-slate-800 mt-1"></p>
+                        </div>
+                    </div>
+                     <div class="mt-4 text-sm bg-slate-50 p-3 rounded-md">
+                        <p><strong>Valor Final (Cliente):</strong> <span id="asaas-final-value"></span></p>
+                        <p><strong>Taxa de Repasse:</strong> R$ 5,00</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="summary-section" class="mt-8 p-5 bg-indigo-50 border-l-4 border-indigo-500 rounded-r-lg min-h-[100px]">
+                <h3 class="font-bold text-lg text-indigo-900 flex items-center gap-2">✨ Análise da IA</h3>
+                <div id="summary-text-container" class="mt-2 text-indigo-800">
+                    <div class="loader"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-12 bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-slate-200">
+             <h2 class="text-2xl font-bold text-slate-900 mb-4">Simulador para o Vendedor Associado</h2>
+             <p class="text-slate-600 mb-6">Use esta ferramenta para calcular o repasse líquido de qualquer venda e entender como as taxas impactam o preço final para o cliente.</p>
+             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                 <div>
+                    <label for="product-value-input" class="block text-sm font-medium text-slate-700 mb-1">Valor do Produto (R$)</label>
+                    <input type="number" id="product-value-input" value="1000" class="w-full p-2 border border-slate-300 rounded-lg text-lg">
+                 </div>
+                 <div>
+                    <span class="block text-sm font-medium text-slate-700 mb-1">Forma de Pagamento</span>
+                     <div id="simulator-navigation" class="flex flex-wrap gap-1 pt-1">
+                     </div>
+                 </div>
+                 <div>
+                    <span class="block text-sm font-medium text-slate-700 mb-1">Simular com taxas de:</span>
+                     <div class="flex gap-2">
+                         <button id="provider-pagarme-btn" class="provider-btn active flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">Pagar.me</button>
+                         <button id="provider-asaas-btn" class="provider-btn flex-1 bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold">Asaas</button>
+                     </div>
+                 </div>
+             </div>
+             <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                 <div class="bg-slate-100 p-4 rounded-xl">
+                     <h3 class="text-sm font-semibold text-slate-500 uppercase">Preço Final (Cliente)</h3>
+                     <p id="sim-final-value" class="text-2xl font-bold text-slate-900 mt-1"></p>
+                 </div>
+                 <div class="bg-slate-100 p-4 rounded-xl">
+                     <h3 class="text-sm font-semibold text-slate-500 uppercase">Custos da Transação</h3>
+                     <p id="sim-total-cost" class="text-2xl font-bold text-slate-900 mt-1"></p>
+                 </div>
+                 <div class="bg-green-100 p-4 rounded-xl border-2 border-green-500">
+                     <h3 class="text-sm font-semibold text-green-800 uppercase">Seu Repasse (75%)</h3>
+                     <p id="sim-vendor-share" class="text-2xl font-bold text-green-700 mt-1"></p>
+                 </div>
+             </div>
+        </div>
+        
+        <div class="mt-12 bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-slate-200">
+             <h2 class="text-2xl font-bold text-slate-900 mb-4">Detalhamento dos Custos de Antecipação</h2>
+             <p class="text-slate-600 mb-6">Esta tabela detalha o custo real da antecipação para cada opção de parcelamento no cartão de crédito.</p>
+             <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Parcelas</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Custo Antecip. (Pagar.me)</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">% Antecip. (Pagar.me)</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Custo Antecip. (Asaas)</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">% Antecip. (Asaas)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="anticipation-table-body" class="bg-white divide-y divide-slate-200">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="mt-12 bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-slate-200">
+             <h2 class="text-2xl font-bold text-slate-900 mb-4">Resumo do Preço Final para o Cliente</h2>
+             <p class="text-slate-600 mb-6">Esta tabela compara o valor total que o cliente pagará para cada opção de parcelamento, garantindo o valor líquido base simulado.</p>
+             <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Parcelas</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Preço Final (Pagar.me)</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Preço Final (Asaas)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="final-value-table-body" class="bg-white divide-y divide-slate-200">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <div class="mt-12">
+             <h2 class="text-2xl md:text-3xl font-bold text-slate-900 text-center mb-6">Visão Geral: Custos e Lucros no Cartão de Crédito</h2>
+             <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-slate-200">
+                <div class="chart-container">
+                    <canvas id="summary-chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const data = {
+            pagarme: {
+                pix: { finalValue: 1010.50, totalCost: 10.50, netProfit: 246.33, transferFee: 3.67 },
+                boleto: { finalValue: 1003.49, totalCost: 3.49, netProfit: 246.51, transferFee: 3.67 },
+                '1x': { finalValue: 1048.11, totalCost: 48.11, netProfit: 246.33, transferFee: 3.67 },
+                '2x': { finalValue: 1079.84, totalCost: 79.84, netProfit: 246.33, transferFee: 3.67 },
+                '3x': { finalValue: 1094.09, totalCost: 94.09, netProfit: 246.33, transferFee: 3.67 },
+                '4x': { finalValue: 1111.02, totalCost: 111.02, netProfit: 246.33, transferFee: 3.67 },
+                '5x': { finalValue: 1129.39, totalCost: 129.39, netProfit: 246.33, transferFee: 3.67 },
+                '6x': { finalValue: 1148.35, totalCost: 148.35, netProfit: 246.33, transferFee: 3.67 },
+            },
+            asaas: {
+                pix: { finalValue: 1000.99, totalCost: 0.99, netProfit: 245.00, transferFee: 5.00 },
+                boleto: { finalValue: 1000.99, totalCost: 0.99, netProfit: 245.00, transferFee: 5.00 },
+                '1x': { finalValue: 1050.49, totalCost: 50.49, netProfit: 245.00, transferFee: 5.00 },
+                '2x': { finalValue: 1066.31, totalCost: 66.31, netProfit: 245.00, transferFee: 5.00 },
+                '3x': { finalValue: 1082.13, totalCost: 82.13, netProfit: 245.00, transferFee: 5.00 },
+                '4x': { finalValue: 1097.95, totalCost: 97.95, netProfit: 245.00, transferFee: 5.00 },
+                '5x': { finalValue: 1113.77, totalCost: 113.77, netProfit: 245.00, transferFee: 5.00 },
+                '6x': { finalValue: 1129.59, totalCost: 129.59, netProfit: 245.00, transferFee: 5.00 },
+            }
+        };
+
+        const anticipationRates = {
+            pagarme: { '1x': 0.0140, '2x': 0.0292, '3x': 0.0430, '4x': 0.0568, '5x': 0.0707, '6x': 0.0845 },
+            asaas:   { '1x': 0.0115, '2x': 0.0080, '3x': 0.0160, '4x': 0.0240, '5x': 0.0320, '6x': 0.0400 }
+        };
+
+        const scenarios = ['PIX', 'Boleto', '1x', '2x', '3x', '4x', '5x', '6x'];
+        let currentScenario = 'PIX';
+        let associateSimulatorScenario = 'PIX';
+        let associateSimulatorProvider = 'pagarme';
+        let summaryChartInstance = null;
+        
+        const navigationContainer = document.getElementById('navigation');
+        const pagarmeCard = document.getElementById('pagarme-card');
+        const asaasCard = document.getElementById('asaas-card');
+        const summaryTextContainer = document.getElementById('summary-text-container');
+        const baseValueInput = document.getElementById('base-value-input');
+        
+        function formatCurrency(value) {
+            return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+        
+        function formatPercent(value) {
+            return (value * 100).toFixed(2).replace('.', ',') + '%';
+        }
+
+        async function callGeminiAPI(prompt, systemInstruction) {
+            const apiKey = "";
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: systemInstruction }] }
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API call failed with status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                return result.candidates?.[0]?.content?.parts?.[0]?.text || "Não foi possível gerar a resposta da IA.";
+            } catch (error) {
+                console.error("Error calling Gemini API:", error);
+                return "Ocorreu um erro ao contatar a IA. Por favor, tente novamente.";
+            }
+        }
+        
+        async function updateUI(scenarioKey = currentScenario) {
+            currentScenario = scenarioKey;
+            
+            const baseValue = parseFloat(baseValueInput.value) || 1000;
+            const scalingFactor = baseValue / 1000;
+
+            const pagarmeDataRaw = data.pagarme[scenarioKey.toLowerCase()];
+            const asaasDataRaw = data.asaas[scenarioKey.toLowerCase()];
+
+            const pagarmeData = {
+                totalCost: pagarmeDataRaw.totalCost * scalingFactor,
+                netProfit: (baseValue * 0.25) - pagarmeDataRaw.transferFee,
+                finalValue: pagarmeDataRaw.finalValue * scalingFactor
+            };
+            
+            const asaasData = {
+                totalCost: asaasDataRaw.totalCost * scalingFactor,
+                netProfit: (baseValue * 0.25) - asaasDataRaw.transferFee,
+                finalValue: asaasDataRaw.finalValue * scalingFactor
+            };
+
+            document.getElementById('pagarme-cost').textContent = formatCurrency(pagarmeData.totalCost);
+            document.getElementById('pagarme-profit').textContent = formatCurrency(pagarmeData.netProfit);
+            document.getElementById('pagarme-final-value').textContent = formatCurrency(pagarmeData.finalValue);
+
+            document.getElementById('asaas-cost').textContent = formatCurrency(asaasData.totalCost);
+            document.getElementById('asaas-profit').textContent = formatCurrency(asaasData.netProfit);
+            document.getElementById('asaas-final-value').textContent = formatCurrency(asaasData.finalValue);
+
+            pagarmeCard.classList.remove('border-green-500', 'bg-green-50');
+            asaasCard.classList.remove('border-green-500', 'bg-green-50');
+            pagarmeCard.classList.add('border-slate-200');
+            asaasCard.classList.add('border-slate-200');
+
+            document.querySelectorAll('.nav-button').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.scenario === scenarioKey) {
+                    btn.classList.add('active');
+                }
+            });
+
+            summaryTextContainer.innerHTML = '<div class="loader"></div>';
+            
+            const systemPrompt = "Você é um analista financeiro especialista em gateways de pagamento para negócios online no Brasil. Forneça uma análise concisa e profissional em um parágrafo. Compare as duas opções com base nos dados fornecidos e indique a melhor escolha, explicando o porquê. Sua resposta deve ser em português do Brasil.";
+            const userPrompt = `Análise de Custo para transação via ${scenarioKey} com valor líquido base de ${formatCurrency(baseValue)}:
+            - Pagar.me: Custo Total ${formatCurrency(pagarmeData.totalCost)}, Lucro Líquido para mim ${formatCurrency(pagarmeData.netProfit)}, Preço Final para o cliente ${formatCurrency(pagarmeData.finalValue)}.
+            - Asaas: Custo Total ${formatCurrency(asaasData.totalCost)}, Lucro Líquido para mim ${formatCurrency(asaasData.netProfit)}, Preço Final para o cliente ${formatCurrency(asaasData.finalValue)}.
+            Qual compensa mais e por quê?`;
+            
+            const analysis = await callGeminiAPI(userPrompt, systemPrompt);
+            summaryTextContainer.innerHTML = `<p>${analysis}</p>`;
+            
+            if (pagarmeData.totalCost < asaasData.totalCost) {
+                pagarmeCard.classList.add('border-green-500', 'bg-green-50');
+                pagarmeCard.classList.remove('border-slate-200');
+            } else {
+                asaasCard.classList.add('border-green-500', 'bg-green-50');
+                asaasCard.classList.remove('border-slate-200');
+            }
+            updateChart();
+            updateAssociateSimulator();
+            updateFinalValueTable();
+            updateAnticipationTable();
+        }
+        
+        function updateAssociateSimulator() {
+            const productValueInput = document.getElementById('product-value-input');
+            const productValue = parseFloat(productValueInput.value) || 0;
+            const scalingFactor = productValue / 1000;
+
+            const providerData = data[associateSimulatorProvider][associateSimulatorScenario.toLowerCase()];
+            
+            const finalValue = providerData.finalValue * scalingFactor;
+            const totalCost = providerData.totalCost * scalingFactor;
+            const vendorShare = productValue * 0.75;
+
+            document.getElementById('sim-final-value').textContent = formatCurrency(finalValue);
+            document.getElementById('sim-total-cost').textContent = formatCurrency(totalCost);
+            document.getElementById('sim-vendor-share').textContent = formatCurrency(vendorShare);
+        }
+        
+        function updateFinalValueTable() {
+            const baseValue = parseFloat(baseValueInput.value) || 1000;
+            const scalingFactor = baseValue / 1000;
+            const tableBody = document.getElementById('final-value-table-body');
+            const creditScenarios = ['1x', '2x', '3x', '4x', '5x', '6x'];
+
+            tableBody.innerHTML = ''; 
+
+            creditScenarios.forEach(scenario => {
+                const pagarmeFinalValue = data.pagarme[scenario.toLowerCase()].finalValue * scalingFactor;
+                const asaasFinalValue = data.asaas[scenario.toLowerCase()].finalValue * scalingFactor;
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">${scenario}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${formatCurrency(pagarmeFinalValue)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${formatCurrency(asaasFinalValue)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function updateAnticipationTable() {
+            const baseValue = parseFloat(baseValueInput.value) || 1000;
+            const scalingFactor = baseValue / 1000;
+            const tableBody = document.getElementById('anticipation-table-body');
+            const creditScenarios = ['1x', '2x', '3x', '4x', '5x', '6x'];
+
+            tableBody.innerHTML = '';
+
+            creditScenarios.forEach(scenario => {
+                const pagarmeFinalValue = data.pagarme[scenario.toLowerCase()].finalValue * scalingFactor;
+                const asaasFinalValue = data.asaas[scenario.toLowerCase()].finalValue * scalingFactor;
+
+                const pagarmeAnticipationPercent = anticipationRates.pagarme[scenario];
+                const asaasAnticipationPercent = anticipationRates.asaas[scenario];
+                
+                let pagarmeAnticipationValue = 0;
+                if(scenario !== '1x') {
+                    const mdrRate = 0.0439; 
+                    const cet = data.pagarme[scenario.toLowerCase()].totalCost / data.pagarme[scenario.toLowerCase()].finalValue;
+                    pagarmeAnticipationValue = (cet - mdrRate) * pagarmeFinalValue;
+                } else {
+                     pagarmeAnticipationValue = 0;
+                }
+
+                let asaasAnticipationValue = 0;
+                if(scenario !== '1x') {
+                    const mdrRate = 0.0249 + (0.49 / asaasFinalValue);
+                    const cet = data.asaas[scenario.toLowerCase()].totalCost / data.asaas[scenario.toLowerCase()].finalValue;
+                    asaasAnticipationValue = (cet - mdrRate) * asaasFinalValue;
+                } else {
+                    const mdrRate = 0.0199 + (0.49 / asaasFinalValue);
+                    const cet = data.asaas[scenario.toLowerCase()].totalCost / data.asaas[scenario.toLowerCase()].finalValue;
+                    asaasAnticipationValue = (cet - mdrRate) * asaasFinalValue;
+                }
+
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">${scenario}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${formatCurrency(pagarmeAnticipationValue)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${formatPercent(pagarmeAnticipationValue/pagarmeFinalValue)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${formatCurrency(asaasAnticipationValue)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${formatPercent(asaasAnticipationValue/asaasFinalValue)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function createNavigation() {
+            scenarios.forEach(scenario => {
+                const button = document.createElement('button');
+                button.textContent = scenario;
+                button.dataset.scenario = scenario;
+                button.className = 'nav-button px-4 py-2 text-sm font-semibold text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-100';
+                button.addEventListener('click', () => updateUI(scenario));
+                navigationContainer.appendChild(button);
+            });
+        }
+        
+        function createSimulatorNavigation() {
+            const simNavContainer = document.getElementById('simulator-navigation');
+            const simScenarios = ['PIX', 'Boleto', '1x', '2x', '3x', '6x'];
+            
+            simScenarios.forEach(scenario => {
+                const button = document.createElement('button');
+                button.textContent = scenario;
+                button.dataset.scenario = scenario;
+                button.className = 'sim-nav-button px-3 py-1 text-xs font-semibold text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-100 flex-grow';
+                button.addEventListener('click', () => {
+                    associateSimulatorScenario = scenario;
+                    document.querySelectorAll('.sim-nav-button').forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    updateAssociateSimulator();
+                });
+                simNavContainer.appendChild(button);
+            });
+        }
+
+        function updateChart() {
+            if (!summaryChartInstance) return;
+            const baseValue = parseFloat(baseValueInput.value) || 1000;
+            const scalingFactor = baseValue / 1000;
+            const labels = ['1x', '2x', '3x', '4x', '5x', '6x'];
+
+            summaryChartInstance.data.datasets[0].data = labels.map(l => data.pagarme[l.toLowerCase()].totalCost * scalingFactor);
+            summaryChartInstance.data.datasets[1].data = labels.map(l => data.asaas[l.toLowerCase()].totalCost * scalingFactor);
+            summaryChartInstance.data.datasets[2].data = labels.map(l => ((baseValue * 0.25) - data.pagarme[l.toLowerCase()].transferFee));
+            summaryChartInstance.data.datasets[3].data = labels.map(l => ((baseValue * 0.25) - data.asaas[l.toLowerCase()].transferFee));
+            summaryChartInstance.update();
+        }
+
+        function createSummaryChart() {
+            const ctx = document.getElementById('summary-chart').getContext('2d');
+            const labels = ['1x', '2x', '3x', '4x', '5x', '6x'];
+            
+            summaryChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Custo Pagar.me', data: [], backgroundColor: '#6366f1', },
+                        { label: 'Custo Asaas', data: [], backgroundColor: '#f59e0b', },
+                        { label: 'Seu Lucro (Pagar.me)', data: [], backgroundColor: '#22c55e', hidden: true },
+                        { label: 'Seu Lucro (Asaas)', data: [], backgroundColor: '#ef4444', hidden: true }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, ticks: { callback: value => 'R$ ' + value } } },
+                    plugins: {
+                        tooltip: { callbacks: { label: context => `${context.dataset.label}: ${formatCurrency(context.parsed.y)}` } },
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+        
+        baseValueInput.addEventListener('input', () => updateUI());
+        document.getElementById('product-value-input').addEventListener('input', updateAssociateSimulator);
+
+        document.querySelectorAll('.provider-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                document.querySelectorAll('.provider-btn').forEach(btn => {
+                    btn.classList.remove('active', 'bg-indigo-600', 'text-white');
+                    btn.classList.add('bg-slate-200', 'text-slate-700');
+                });
+                e.target.classList.add('active', 'bg-indigo-600', 'text-white');
+                e.target.classList.remove('bg-slate-200', 'text-slate-700');
+                associateSimulatorProvider = e.target.id === 'provider-pagarme-btn' ? 'pagarme' : 'asaas';
+                updateAssociateSimulator();
+            });
+        });
+
+        window.onload = () => {
+            createNavigation();
+            createSimulatorNavigation();
+            createSummaryChart();
+            updateUI('PIX');
+        };
+    </script>
+</body>
+</html>
+
